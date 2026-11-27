@@ -109,26 +109,6 @@ export function AssistantChat({ courseId, courseCode, courseName }: AssistantCha
                   }`}
                 >
                   <MathRenderer content={msg.content} />
-
-                  {/* Inline Citations */}
-                  {msg.citations && msg.citations.length > 0 && (
-                    <div className="pt-2 border-t border-border/40 space-y-1">
-                      <div className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
-                        <BookOpen className="h-3 w-3 text-primary" />
-                        Grounded Sources Cited:
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {msg.citations.map((c, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded bg-background border border-border/60 text-[10px] text-foreground/90 font-mono"
-                          >
-                            {c.citation}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             )
@@ -141,7 +121,7 @@ export function AssistantChat({ courseId, courseCode, courseName }: AssistantCha
               </div>
               <div className="p-3 rounded-xl bg-muted/40 border border-border/60 flex items-center gap-2">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                <span>Searching slides and formulating grounded answer...</span>
+                <span>Thinking...</span>
               </div>
             </div>
           )}
