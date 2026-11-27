@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       .join('\n\n---\n\n')
 
     // 3. Prompt with Grounding & Citation Instructions
-    const systemPrompt = `You are "TIET-GPT", the specialized AI tutor and exam assistant for Thapar Institute of Engineering & Technology (TIET), Patiala.
+    const systemPrompt = `You are "TIET - AI", the specialized AI tutor and exam assistant for Thapar Institute of Engineering & Technology (TIET), Patiala.
 You are assisting students with ${course?.code || 'the course'}: ${course?.name || ''}.
 
 STRICT GROUNDING RULES:
@@ -64,7 +64,7 @@ Please provide a helpful, step-by-step answer citing the exact slide numbers or 
       replyText = await llm.generateText(userPrompt, { systemPrompt, temperature: 0.2 })
     } catch (e) {
       console.error('LLM generation error:', e)
-      replyText = `Sorry, TIET - GPT is temporarily unable to reach the AI service for ${course?.code || 'this course'}. Please try again in a moment.`
+      replyText = `Sorry, TIET - AI is temporarily unable to reach the AI service for ${course?.code || 'this course'}. Please try again in a moment.`
     }
 
     return NextResponse.json({

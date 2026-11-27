@@ -30,7 +30,7 @@ const TABS: Tab[] = [
   { href: '/weightage', label: 'Weightage', icon: <BarChart3 className="h-4 w-4" /> },
   {
     href: '/assistant',
-    label: 'TIET - GPT',
+    label: 'TIET - AI',
     icon: <Sparkles className="h-4 w-4" />,
   },
   { href: '/discuss', label: 'Discuss', icon: <MessageSquare className="h-4 w-4" /> },

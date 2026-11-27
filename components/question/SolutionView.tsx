@@ -151,7 +151,7 @@ export function SolutionView({ questionId, courseId, solutions }: SolutionViewPr
 
                   <span className="text-xs text-muted-foreground">
                     {isAi
-                      ? 'TIET-GPT Ingestion Model'
+                      ? 'TIET - AI Ingestion Model'
                       : sol.author?.name || 'Peer Contributor'}
                   </span>
                 </div>

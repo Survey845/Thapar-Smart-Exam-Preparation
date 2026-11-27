@@ -231,7 +231,7 @@ Rules:
                         authorType: 'AI',
                         content: String(q.solution).trim(),
                         isVerified: true,
-                        verifiedBy: 'TIET-GPT Auto Ingest',
+                        verifiedBy: 'TIET - AI Auto Ingest',
                       },
                     },
                   }

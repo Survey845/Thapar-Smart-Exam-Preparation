@@ -67,7 +67,7 @@ export default async function CourseOverviewPage({ params }: CourseOverviewPageP
           <Button asChild className="brand-gradient text-white border-0 shadow-sm">
             <Link href={`/courses/${course.id}/assistant`}>
               <Sparkles className="h-4 w-4 mr-1.5" />
-              Launch TIET-GPT
+              Launch TIET - AI
             </Link>
           </Button>
         </div>

@@ -29,7 +29,7 @@ export default async function AssistantPage({ params }: AssistantPageProps) {
       {/* ── Headline Header ── */}
       <div className="border-b border-border/60 pb-5">
         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          TIET - GPT
+          TIET - AI
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
           Ask doubts, revise core concepts, or practice exam-style questions for {course.code} ({course.name}).

@@ -268,7 +268,7 @@ async function main() {
                             authorType: 'AI',
                             content: q.solution.trim(),
                             isVerified: true,
-                            verifiedBy: 'TIET-GPT PDF Extractor',
+                            verifiedBy: 'TIET - AI PDF Extractor',
                           },
                         },
                       }

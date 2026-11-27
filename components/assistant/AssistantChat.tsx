@@ -29,7 +29,7 @@ export function AssistantChat({ courseId, courseCode, courseName }: AssistantCha
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Hello! I am **TIET - GPT**, your exam prep assistant for **${courseCode}**${courseName ? ` (${courseName})` : ''}. How can I help you prepare today?`,
+      content: `Hello! I am **TIET - AI**, your exam prep assistant for **${courseCode}**${courseName ? ` (${courseName})` : ''}. How can I help you prepare today?`,
     },
   ])
   const [input, setInput] = useState('')
@@ -139,7 +139,7 @@ export function AssistantChat({ courseId, courseCode, courseName }: AssistantCha
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Ask TIET-GPT anything about ${courseCode} exam questions and slides...`}
+              placeholder={`Ask TIET - AI anything about ${courseCode} exam questions and slides...`}
               disabled={loading}
               className="text-xs h-10"
             />

@@ -210,7 +210,7 @@ export default async function ThreadViewPage({ params }: ThreadViewPageProps) {
                   {post.isAiGenerated && (
                     <Badge variant="warning" className="text-[10px]">
                       <Sparkles className="h-3 w-3 mr-1" />
-                      TIET-GPT Answer (Grounded)
+                      TIET - AI Answer (Grounded)
                     </Badge>
                   )}
                   <span className="font-bold text-xs text-foreground">

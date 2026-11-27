@@ -321,7 +321,7 @@ export async function askAiInThreadAction(
 
   const contextStr = passages.map((p) => `${p.citation}: ${p.content}`).join('\n\n')
 
-  const systemPrompt = `You are TIET-GPT answering a student doubt in the course discussion forum.
+  const systemPrompt = `You are TIET - AI answering a student doubt in the course discussion forum.
 Ground your answer ONLY in the provided course material. Provide concise bullet points and cite the exact slide numbers or past papers.`
 
   const answer = await llm.generateText(
