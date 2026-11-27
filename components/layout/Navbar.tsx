@@ -40,30 +40,22 @@ interface NavLink {
   roles?: Role[] // undefined = visible to all
 }
 
-const NAV_LINKS: NavLink[] = [
-  {
-    href: '/dashboard',
-    label: 'Dashboard',
-    icon: <LayoutDashboard className="h-4 w-4" />,
-  },
-  {
-    href: '/courses',
-    label: 'Courses',
-    icon: <BookOpen className="h-4 w-4" />,
-  },
-  {
-    href: '/admin',
-    label: 'Admin',
-    icon: <ShieldCheck className="h-4 w-4" />,
-    roles: ['MODERATOR'],
-  },
-]
+const NAV_LINKS: NavLink[] = []
 
 export function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Hide global navbar on standalone auth screens
+  const isAuthPage =
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
+    pathname?.startsWith('/forgot-password') ||
+    pathname?.startsWith('/reset-password')
+
+  if (isAuthPage) return null
 
   const role = session?.user?.role as Role | undefined
   const initials = session?.user?.name
@@ -134,47 +126,49 @@ export function Navbar() {
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
 
-          {/* User menu */}
+          {/* User menu & explicit Sign Out button */}
           {session?.user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 px-2">
-                  <Avatar className="h-7 w-7">
-                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                  </Avatar>
-                  <span className="hidden sm:inline text-sm font-medium max-w-[120px] truncate">
-                    {session.user.name?.split(' ')[0]}
-                  </span>
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{session.user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{session.user.email}</p>
-                    <Badge variant="outline" className="mt-1 w-fit text-xs">
-                      {role ? ROLE_LABELS[role] : ''}
-                    </Badge>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                  onClick={() => signOut({ callbackUrl: '/login' })}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-1.5">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-secondary/60">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">{initials}</AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline text-sm font-medium max-w-[120px] truncate">
+                      {session.user.name?.split(' ')[0]}
+                    </span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{session.user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{session.user.email}</p>
+                      <Badge variant="outline" className="mt-1 w-fit text-xs">
+                        {role ? ROLE_LABELS[role] : ''}
+                      </Badge>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive cursor-pointer font-medium"
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
 
           {/* Mobile menu toggle */}
@@ -215,6 +209,34 @@ export function Navbar() {
               </Link>
             )
           })}
+
+          {session?.user && (
+            <div className="pt-3 mt-2 border-t border-border/60 flex flex-col gap-1.5">
+              <div className="px-3 py-1 flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-medium text-foreground truncate max-w-[160px]">{session.user.name}</span>
+                <span className="font-mono text-[10px] truncate max-w-[150px]">{session.user.email}</span>
+              </div>
+              <Link
+                href="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary text-foreground"
+              >
+                <User className="h-4 w-4" />
+                Profile Settings
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false)
+                  signOut({ callbackUrl: '/login' })
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-destructive hover:bg-destructive/10 text-left transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </div>
+          )}
         </nav>
       )}
     </header>

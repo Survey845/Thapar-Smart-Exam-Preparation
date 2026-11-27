@@ -3,10 +3,104 @@ import { authOptions } from '@/lib/auth/config'
 import { prisma } from '@/lib/db'
 import { notFound, redirect } from 'next/navigation'
 import { WeightageDashboard } from '@/components/analytics/WeightageDashboard'
-import { BarChart3 } from 'lucide-react'
 
 interface WeightagePageProps {
   params: Promise<{ id: string }>
+}
+
+interface ComputedWeightage {
+  id: string
+  evalType: string
+  topic: string
+  frequencyScore: number
+  marksShare: number
+  yearTrend: Array<{ year: number; marks: number; count: number }>
+  lastUpdated: Date
+}
+
+function computeWeightagesForBucket(
+  evalType: string,
+  bucket: Array<{
+    id: string
+    evalType: string
+    year: number
+    marks: number
+    topicTags: string[]
+    sourceDocId: string | null
+  }>
+): ComputedWeightage[] {
+  if (bucket.length === 0) return []
+
+  const paperKeys = new Set(
+    bucket.map((q) => q.sourceDocId || `${q.evalType}-${q.year}`)
+  )
+  const totalPapers = Math.max(1, paperKeys.size)
+
+  let totalMarks = 0
+  const topicMap = new Map<
+    string,
+    {
+      marks: number
+      papers: Set<string>
+      byYear: Map<number, { marks: number; count: number }>
+    }
+  >()
+
+  for (const q of bucket) {
+    const tags = q.topicTags.length > 0 ? q.topicTags : ['General']
+    const paperKey = q.sourceDocId || `${q.evalType}-${q.year}`
+    const marksPerTag = q.marks / tags.length
+    totalMarks += q.marks
+
+    for (const rawTag of tags) {
+      const topic = rawTag.trim()
+      if (!topic) continue
+
+      let entry = topicMap.get(topic)
+      if (!entry) {
+        entry = { marks: 0, papers: new Set(), byYear: new Map() }
+        topicMap.set(topic, entry)
+      }
+
+      entry.marks += marksPerTag
+      entry.papers.add(paperKey)
+
+      const yr = entry.byYear.get(q.year) || { marks: 0, count: 0 }
+      yr.marks += marksPerTag
+      yr.count += 1
+      entry.byYear.set(q.year, yr)
+    }
+  }
+
+  const safeTotalMarks = totalMarks > 0 ? totalMarks : 1
+  const results: ComputedWeightage[] = []
+
+  for (const [topic, entry] of topicMap.entries()) {
+    const marksShare = Math.round((entry.marks / safeTotalMarks) * 1000) / 10
+    const frequencyScore = Math.min(
+      100,
+      Math.round((entry.papers.size / totalPapers) * 100)
+    )
+    const yearTrend = Array.from(entry.byYear.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([year, stats]) => ({
+        year,
+        marks: Math.round(stats.marks * 10) / 10,
+        count: stats.count,
+      }))
+
+    results.push({
+      id: `${evalType}-${topic}`,
+      evalType,
+      topic,
+      frequencyScore,
+      marksShare,
+      yearTrend,
+      lastUpdated: new Date(),
+    })
+  }
+
+  return results.sort((a, b) => b.marksShare - a.marksShare)
 }
 
 export default async function WeightagePage({ params }: WeightagePageProps) {
@@ -25,118 +119,52 @@ export default async function WeightagePage({ params }: WeightagePageProps) {
     notFound()
   }
 
-  // Fetch precomputed topic weightages
-  let weightages = await prisma.topicWeightage.findMany({
-    where: { courseId: course.id },
-    orderBy: { marksShare: 'desc' },
+  // Compute deterministic topic weightages directly from approved questions extracted from uploaded resources
+  const questions = await prisma.question.findMany({
+    where: {
+      courseId: course.id,
+      isApproved: true,
+    },
+    select: {
+      id: true,
+      evalType: true,
+      year: true,
+      marks: true,
+      topicTags: true,
+      sourceDocId: true,
+    },
   })
 
-  // If none calculated yet, provide realistic curriculum distribution for prototype
-  if (weightages.length === 0) {
-    weightages = [
-      {
-        id: 'w-1',
-        courseId: course.id,
-        evalType: 'MST' as any,
-        topic: 'Agile Software Development & Scrum',
-        frequencyScore: 85,
-        marksShare: 32.5,
-        yearTrend: [
-          { year: 2022, marks: 10, count: 1 },
-          { year: 2023, marks: 15, count: 2 },
-          { year: 2024, marks: 15, count: 2 },
-        ] as any,
-        lastUpdated: new Date(),
-      },
-      {
-        id: 'w-2',
-        courseId: course.id,
-        evalType: 'MST' as any,
-        topic: 'Software Life Cycle Models (Waterfall, Spiral, V-Model)',
-        frequencyScore: 75,
-        marksShare: 27.5,
-        yearTrend: [
-          { year: 2022, marks: 10, count: 1 },
-          { year: 2023, marks: 10, count: 1 },
-          { year: 2024, marks: 10, count: 1 },
-        ] as any,
-        lastUpdated: new Date(),
-      },
-      {
-        id: 'w-3',
-        courseId: course.id,
-        evalType: 'MST' as any,
-        topic: 'Requirements Engineering & IEEE 830',
-        frequencyScore: 70,
-        marksShare: 22.0,
-        yearTrend: [
-          { year: 2022, marks: 5, count: 1 },
-          { year: 2023, marks: 10, count: 1 },
-          { year: 2024, marks: 10, count: 1 },
-        ] as any,
-        lastUpdated: new Date(),
-      },
-      {
-        id: 'w-4',
-        courseId: course.id,
-        evalType: 'MST' as any,
-        topic: 'Software Cost Estimation & COCOMO',
-        frequencyScore: 55,
-        marksShare: 18.0,
-        yearTrend: [
-          { year: 2022, marks: 10, count: 1 },
-          { year: 2023, marks: 5, count: 1 },
-        ] as any,
-        lastUpdated: new Date(),
-      },
-      {
-        id: 'w-5',
-        courseId: course.id,
-        evalType: 'EST' as any,
-        topic: 'Design Engineering & UML (Class, Sequence, DFD)',
-        frequencyScore: 90,
-        marksShare: 35.0,
-        yearTrend: [
-          { year: 2023, marks: 25, count: 2 },
-          { year: 2024, marks: 30, count: 3 },
-        ] as any,
-        lastUpdated: new Date(),
-      },
-      {
-        id: 'w-6',
-        courseId: course.id,
-        evalType: 'EST' as any,
-        topic: 'Software Testing & Maintenance Strategies',
-        frequencyScore: 80,
-        marksShare: 28.0,
-        yearTrend: [
-          { year: 2023, marks: 20, count: 2 },
-          { year: 2024, marks: 25, count: 2 },
-        ] as any,
-        lastUpdated: new Date(),
-      },
-    ]
-  }
+  const evalTypesPresent = Array.from(new Set(questions.map((q) => q.evalType)))
+  const weightages: ComputedWeightage[] = [
+    ...computeWeightagesForBucket('ALL', questions),
+    ...evalTypesPresent.flatMap((et) =>
+      computeWeightagesForBucket(
+        et,
+        questions.filter((q) => q.evalType === et)
+      )
+    ),
+  ]
+
+  const totalPapersAnalyzed = new Set(
+    questions.map((q) => q.sourceDocId || `${q.evalType}-${q.year}`)
+  ).size
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="border-b border-border/60 pb-5">
-        <div className="flex items-center gap-2 text-primary font-medium text-xs mb-1">
-          <BarChart3 className="h-3.5 w-3.5" />
-          <span>Deterministic Historical Intelligence</span>
-        </div>
         <h2 className="text-2xl font-bold tracking-tight">
-          Topic Weightage Dashboard — {course.code}
+          Topic Weightage
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-          Historical frequency and marks share calculated across all approved past TIET exam papers. Identify high-yield modules to maximize prep efficiency.
+          Historical frequency and marks share calculated across {totalPapersAnalyzed} uploaded past exam {totalPapersAnalyzed === 1 ? 'paper' : 'papers'} ({questions.length} questions).
         </p>
       </div>
 
       <WeightageDashboard
         courseId={course.id}
         courseCode={course.code}
-        weightages={weightages as any}
+        weightages={weightages}
       />
     </div>
   )

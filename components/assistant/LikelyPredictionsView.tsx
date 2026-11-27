@@ -13,20 +13,6 @@ interface LikelyPredictionsViewProps {
 export function LikelyPredictionsView({ predictions }: LikelyPredictionsViewProps) {
   return (
     <div className="space-y-6">
-      {/* ── Honesty Disclaimer ── */}
-      <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-muted-foreground flex items-start gap-2.5">
-        <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-        <div className="space-y-0.5">
-          <span className="font-bold text-foreground">
-            Academic Estimate Disclaimer
-          </span>
-          <p>
-            These predictions are statistical probability estimates derived from approved TIET exam papers and slide allocations.
-            They are <strong>not guarantees</strong>. Use them to prioritize study time strategically while covering the complete syllabus.
-          </p>
-        </div>
-      </div>
-
       {/* ── Predictions List ── */}
       <div className="space-y-4">
         {predictions.map((pred, idx) => (

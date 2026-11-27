@@ -4,12 +4,19 @@ export class GeminiProvider implements LLMProvider {
   name = 'Gemini'
   private apiKey: string
   private model: string
+  private candidateModels: string[]
   private embeddingModel: string
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta'
 
   constructor(apiKey?: string, model?: string, embeddingModel?: string) {
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || ''
-    this.model = model || process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+    this.model = model || process.env.GEMINI_MODEL || 'gemini-3.5-flash'
+    const fallbacks = (process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.6-flash,gemini-3.8-flash,gemini-3.5-flash-lite')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    this.candidateModels = [this.model, ...fallbacks.filter((m) => m !== this.model)]
+
     this.embeddingModel =
       embeddingModel || process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004'
 
@@ -23,42 +30,58 @@ export class GeminiProvider implements LLMProvider {
       throw new Error('GEMINI_API_KEY is not configured.')
     }
 
-    const url = `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`
+    let lastError: Error | null = null
 
-    const body: Record<string, unknown> = {
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: prompt }],
-        },
-      ],
-      generationConfig: {
-        temperature: options?.temperature ?? 0.2,
-        maxOutputTokens: options?.maxTokens ?? 2048,
-      },
-    }
+    for (const targetModel of this.candidateModels) {
+      try {
+        const url = `${this.baseUrl}/models/${targetModel}:generateContent?key=${this.apiKey}`
 
-    if (options?.systemPrompt) {
-      body.systemInstruction = {
-        parts: [{ text: options.systemPrompt }],
+        const body: Record<string, unknown> = {
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: options?.temperature ?? 0.2,
+            maxOutputTokens: options?.maxTokens ?? 2048,
+          },
+        }
+
+        if (options?.systemPrompt) {
+          body.systemInstruction = {
+            parts: [{ text: options.systemPrompt }],
+          }
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+
+        if (!res.ok) {
+          const errText = await res.text()
+          // If 503 or 429, try next model in candidateModels list
+          if (res.status === 503 || res.status === 429) {
+            console.warn(`Model ${targetModel} busy (${res.status}), trying fallback...`)
+            lastError = new Error(`Gemini API error (${res.status}): ${errText}`)
+            continue
+          }
+          throw new Error(`Gemini API error (${res.status}): ${errText}`)
+        }
+
+        const data = await res.json()
+        const candidate = data.candidates?.[0]
+        const text = candidate?.content?.parts?.[0]?.text ?? ''
+        return text
+      } catch (err) {
+        lastError = err as Error
       }
     }
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (!res.ok) {
-      const errText = await res.text()
-      throw new Error(`Gemini API error (${res.status}): ${errText}`)
-    }
-
-    const data = await res.json()
-    const candidate = data.candidates?.[0]
-    const text = candidate?.content?.parts?.[0]?.text ?? ''
-    return text
+    throw lastError || new Error('All Gemini candidate models failed.')
   }
 
   async generateStructured<T>(

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { MathRenderer } from '@/components/math/MathRenderer'
+import { RealtimeSync } from '@/components/realtime/RealtimeSync'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -24,8 +25,10 @@ import {
   votePostAction,
   markAcceptedAnswerAction,
   moderateThreadAction,
-  askAiInThreadAction,
+  deletePostAction,
 } from '../actions'
+import { ReportButton } from '@/components/forum/ReportButton'
+import { DeleteThreadButton } from '@/components/forum/DeleteThreadButton'
 
 interface ThreadViewPageProps {
   params: Promise<{ id: string; threadId: string }>
@@ -63,10 +66,14 @@ export default async function ThreadViewPage({ params }: ThreadViewPageProps) {
   }
 
   const isModerator = session.user.role === 'MODERATOR'
+  const isCR = session.user.role === 'CR'
+  const canPin = isModerator || isCR
   const isAuthor = thread.authorId === session.user.id
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+      <RealtimeSync channels={['forum']} courseId={courseId} threadId={thread.id} />
+
       {/* ── Back to Forum ── */}
       <div>
         <Link
@@ -107,19 +114,33 @@ export default async function ThreadViewPage({ params }: ThreadViewPageProps) {
               </h1>
             </div>
 
-            {/* Moderator Quick Actions */}
-            {isModerator && (
-              <div className="flex items-center gap-1.5">
-                <form action={moderateThreadAction.bind(null, thread.id, 'PIN', courseId)}>
-                  <Button variant="outline" size="sm" type="submit" className="text-xs h-7">
-                    {thread.isPinned ? 'Unpin' : 'Pin'}
-                  </Button>
-                </form>
-                <form action={moderateThreadAction.bind(null, thread.id, 'LOCK', courseId)}>
-                  <Button variant="outline" size="sm" type="submit" className="text-xs h-7">
-                    {thread.isLocked ? 'Unlock' : 'Lock'}
-                  </Button>
-                </form>
+            {/* Pin (Teacher / CR), Report (CR), Lock & Delete (Teacher) Quick Actions */}
+            {(canPin || isModerator || isCR) && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {canPin && (
+                  <form action={async () => { 'use server'; await moderateThreadAction(thread.id, 'PIN', courseId) }}>
+                    <Button variant="outline" size="sm" type="submit" className="text-xs h-7">
+                      {thread.isPinned ? 'Unpin' : 'Pin'}
+                    </Button>
+                  </form>
+                )}
+                {isCR && (
+                  <ReportButton
+                    courseId={courseId}
+                    threadId={thread.id}
+                    targetLabel="Thread"
+                  />
+                )}
+                {isModerator && (
+                  <>
+                    <form action={async () => { 'use server'; await moderateThreadAction(thread.id, 'LOCK', courseId) }}>
+                      <Button variant="outline" size="sm" type="submit" className="text-xs h-7">
+                        {thread.isLocked ? 'Unlock' : 'Lock'}
+                      </Button>
+                    </form>
+                    <DeleteThreadButton threadId={thread.id} courseId={courseId} />
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -156,16 +177,6 @@ export default async function ThreadViewPage({ params }: ThreadViewPageProps) {
           {/* Thread Content */}
           <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
             <MathRenderer content={thread.content} />
-          </div>
-
-          {/* In-Thread "Ask AI" Trigger */}
-          <div className="pt-2 border-t border-border/40 flex justify-end">
-            <form action={askAiInThreadAction.bind(null, thread.id, thread.title + '\n' + thread.content, courseId)}>
-              <Button type="submit" size="sm" variant="outline" className="text-xs brand-gradient text-white border-0 shadow-sm">
-                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                Ask TIET-GPT to Answer
-              </Button>
-            </form>
           </div>
         </CardContent>
       </Card>
@@ -215,7 +226,7 @@ export default async function ThreadViewPage({ params }: ThreadViewPageProps) {
 
                 {/* Vote & Accept Controls */}
                 <div className="flex items-center gap-2">
-                  <form action={votePostAction.bind(null, post.id, true)}>
+                  <form action={async () => { 'use server'; await votePostAction(post.id, true) }}>
                     <button
                       type="submit"
                       className="flex items-center gap-1 text-xs px-2 py-0.5 rounded hover:bg-secondary text-foreground"
@@ -225,11 +236,37 @@ export default async function ThreadViewPage({ params }: ThreadViewPageProps) {
                     </button>
                   </form>
 
-                  {(isAuthor || isModerator) && !post.isAccepted && (
-                    <form action={markAcceptedAnswerAction.bind(null, thread.id, post.id, courseId)}>
+                  {/* Only the student who asked the doubt can accept an answer */}
+                  {isAuthor && !post.isAccepted && (
+                    <form action={async () => { 'use server'; await markAcceptedAnswerAction(thread.id, post.id, courseId) }}>
                       <Button variant="ghost" size="sm" type="submit" className="text-[11px] h-7 text-emerald-600">
                         <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                        Accept
+                        Accept Answer
+                      </Button>
+                    </form>
+                  )}
+
+                  {/* CR can report inappropriate replies to Teachers */}
+                  {isCR && (
+                    <ReportButton
+                      courseId={courseId}
+                      threadId={thread.id}
+                      postId={post.id}
+                      targetLabel="Reply"
+                    />
+                  )}
+
+                  {/* Author or Teacher/Moderator can delete reply */}
+                  {(post.authorId === session.user.id || isModerator) && (
+                    <form action={async () => { 'use server'; await deletePostAction(post.id, courseId) }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="submit"
+                        title="Delete reply"
+                        className="text-[11px] h-7 px-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </form>
                   )}
@@ -272,8 +309,8 @@ export default async function ThreadViewPage({ params }: ThreadViewPageProps) {
             }}
             className="space-y-3"
           >
-            <label className="text-xs font-bold text-foreground">
-              Write a Reply (Markdown and $math$ supported):
+            <label className="text-xs font-semibold text-foreground">
+              Write a Reply:
             </label>
             <textarea
               name="content"

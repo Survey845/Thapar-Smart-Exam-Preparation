@@ -69,19 +69,6 @@ export function StudyPlanView({ courseId, courseCode }: StudyPlanViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
-      <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-start gap-3">
-        <CalendarDays className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-        <div className="space-y-0.5 text-xs">
-          <div className="font-bold text-foreground">
-            Targeted 4-Day MST Revision Roadmap
-          </div>
-          <p className="text-muted-foreground">
-            Automatically scheduled leading up to the MST on Oct 14th based on your academic calendar and historical topic weightages.
-          </p>
-        </div>
-      </div>
-
       {/* ── Days Timeline ── */}
       <div className="space-y-4">
         {planDays.map((step, idx) => (

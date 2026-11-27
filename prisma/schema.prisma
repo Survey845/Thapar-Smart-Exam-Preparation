@@ -12,9 +12,8 @@ datasource db {
 
 enum Role {
   STUDENT
-  CONTRIBUTOR
-  MODERATOR
   CR // Class Representative
+  MODERATOR // Teacher / Faculty / Moderator
 }
 
 enum DocType {
@@ -87,11 +86,13 @@ model User {
   batch   Batch?  @relation(fields: [batchId], references: [id])
 
   enrollments      Enrollment[]
+  teachingCourses  TeacherCourse[]
   uploads          Document[]        @relation("UploadedDocs")
   solutions        Solution[]
   practiceSessions PracticeSession[]
   forumThreads     ForumThread[]
   forumPosts       ForumPost[]
+  forumReports     ForumReport[]
   votes            SolutionVote[]
 
   createdAt DateTime @default(now())
@@ -113,6 +114,17 @@ model Batch {
   @@map("batches")
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("password_reset_tokens")
+}
+
 model Course {
   id          String   @id @default(cuid())
   code        String   @unique // e.g. "UCS503"
@@ -121,6 +133,7 @@ model Course {
   semester    Int      // 1-8
 
   enrollments     Enrollment[]
+  teachers        TeacherCourse[]
   documents       Document[]
   questions       Question[]
   slideChunks     SlideChunk[]
@@ -148,6 +161,20 @@ model Enrollment {
 
   @@unique([userId, courseId])
   @@map("enrollments")
+}
+
+model TeacherCourse {
+  id        String   @id @default(cuid())
+  teacherId String
+  courseId  String
+
+  teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([teacherId, courseId])
+  @@map("teacher_courses")
 }
 
 model SyllabusUnit {
@@ -308,6 +335,7 @@ model CalendarEvent {
   weightage        Float?
   notes            String?
   isApproved       Boolean   @default(true)
+  createdById      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -361,7 +389,8 @@ model ForumThread {
   acceptedPostId String?
   views          Int         @default(0)
 
-  posts ForumPost[]
+  posts   ForumPost[]
+  reports ForumReport[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -381,10 +410,28 @@ model ForumPost {
   citations     Json?
   upvotes       Int         @default(0)
 
+  reports ForumReport[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("forum_posts")
+}
+
+model ForumReport {
+  id         String       @id @default(cuid())
+  courseId   String
+  threadId   String?
+  thread     ForumThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  postId     String?
+  post       ForumPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String
+  status     String       @default("OPEN") // OPEN, DISMISSED
+  createdAt  DateTime     @default(now())
+
+  @@map("forum_reports")
 }
 
 model PatternReport {

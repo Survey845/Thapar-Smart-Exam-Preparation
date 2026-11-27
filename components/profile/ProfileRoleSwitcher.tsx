@@ -8,9 +8,8 @@ import { Loader2, ArrowRight } from 'lucide-react'
 
 const DEMO_ACCOUNTS = [
   { email: 'student@thapar.edu', role: 'Student', desc: 'Practices, views calendar, chats with AI' },
-  { email: 'contributor@thapar.edu', role: 'Contributor', desc: 'Uploads PYQs, slides & solutions' },
-  { email: 'moderator@thapar.edu', role: 'Moderator', desc: 'Reviews & approves uploads, moderates forum' },
-  { email: 'cr@thapar.edu', role: 'Class Rep (CR)', desc: 'Manages batch calendar & creates exams' },
+  { email: 'cr@thapar.edu', role: 'Class Rep (CR)', desc: 'Associated with batch; manages batch calendar & exams' },
+  { email: 'moderator@thapar.edu', role: 'Teacher', desc: 'Answers doubts, approves uploads & moderates forum' },
 ]
 
 interface ProfileRoleSwitcherProps {

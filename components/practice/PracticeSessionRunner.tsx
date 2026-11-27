@@ -76,6 +76,8 @@ export function PracticeSessionRunner({
   ).sort()
 
   async function handleStart() {
+    if (questions.length === 0) return
+
     let pool = questions.filter((q) => {
       if (selectedEvalType !== 'ALL' && q.evalType !== selectedEvalType) return false
       if (selectedTopic !== 'ALL' && !q.topicTags.includes(selectedTopic)) return false
@@ -145,10 +147,6 @@ export function PracticeSessionRunner({
       <div className="max-w-2xl mx-auto space-y-6">
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <div className="flex items-center gap-2 text-primary text-xs font-semibold mb-1">
-              <Dumbbell className="h-4 w-4" />
-              <span>Targeted Practice Mode</span>
-            </div>
             <CardTitle className="text-xl">Configure Your Practice Session</CardTitle>
             <CardDescription className="text-xs">
               Attempt authentic past-year questions, self-grade with verified solutions, and master high-yield topics without repetition.
@@ -220,10 +218,16 @@ export function PracticeSessionRunner({
               </div>
             </div>
 
-            <Button onClick={handleStart} className="w-full brand-gradient text-white border-0 shadow-sm">
-              <Dumbbell className="h-4 w-4 mr-2" />
-              Begin Practice
-            </Button>
+            {questions.length === 0 ? (
+              <div className="p-4 rounded-lg border border-dashed border-border/70 text-center text-xs text-muted-foreground">
+                No past-paper questions have been extracted for {courseCode} yet.
+              </div>
+            ) : (
+              <Button onClick={handleStart} className="w-full brand-gradient text-white border-0 shadow-sm">
+                <Dumbbell className="h-4 w-4 mr-2" />
+                Begin Practice ({Math.min(questionCount, questions.length)} of {questions.length} available)
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

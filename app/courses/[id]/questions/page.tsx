@@ -49,12 +49,8 @@ export default async function QuestionsPage({ params }: QuestionsPageProps) {
     <div className="space-y-6 animate-fade-in">
       {/* ── Header ── */}
       <div className="border-b border-border/60 pb-5">
-        <div className="flex items-center gap-2 text-primary font-medium text-xs mb-1">
-          <HelpCircle className="h-3.5 w-3.5" />
-          <span>Curated TIET Past Papers</span>
-        </div>
         <h2 className="text-2xl font-bold tracking-tight">
-          Question Bank — {course.code}
+          Question Bank
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
           Browse real exam questions from previous years (MST, EST, Quizzes). Every question features step-by-step solutions with mathematical rendering and community verification.

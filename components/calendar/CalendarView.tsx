@@ -10,7 +10,6 @@ import {
   Clock,
   MapPin,
   Sparkles,
-  Download,
   Plus,
   BookOpen,
   CheckCircle2,
@@ -45,6 +44,16 @@ interface CalendarViewProps {
   events: CalendarEventItem[]
 }
 
+const EVAL_TYPE_LABELS: Record<string, string> = {
+  MST: 'MST',
+  EST: 'EST',
+  QUIZ: 'Quiz',
+  LAB_EVAL: 'Lab Evaluation',
+  SESSIONAL: 'Sessional',
+  VIVA: 'Viva',
+  ASSIGNMENT: 'Assignment',
+}
+
 export function CalendarView({
   courseId,
   courseCode,
@@ -65,7 +74,7 @@ export function CalendarView({
   const [weightage, setWeightage] = useState('30')
   const [notes, setNotes] = useState('')
 
-  const isCRorModerator = userRole === 'CR' || userRole === 'MODERATOR'
+  const isFacultyOrCR = userRole === 'CR' || userRole === 'MODERATOR'
 
   // Filter events
   const filteredEvents = events.filter((e) => {
@@ -74,28 +83,6 @@ export function CalendarView({
     if (filterType === 'LABS') return ['LAB_EVAL', 'QUIZ', 'VIVA'].includes(e.type)
     return e.type === filterType
   })
-
-  // Export to .ics
-  function handleExportIcs() {
-    let icsContent = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//TIET Smart Exam Prep//Calendar//EN\r\nCALSCALE:GREGORIAN\r\n`
-
-    events.forEach((ev) => {
-      const d = new Date(ev.start)
-      const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
-      const dtstart = d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
-      icsContent += `BEGIN:VEVENT\r\nUID:${ev.id}@tiet-examprep.edu\r\nDTSTAMP:${dtstamp}\r\nDTSTART:${dtstart}\r\nSUMMARY:${courseCode} ${ev.type}: ${ev.title}\r\nDESCRIPTION:Venue: ${ev.venue || 'TBA'}, Syllabus: ${ev.syllabusTopicIds.join(', ')}\r\nLOCATION:${ev.venue || 'TIET Campus'}\r\nEND:VEVENT\r\n`
-    })
-
-    icsContent += `END:VCALENDAR\r\n`
-
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
-    const link = document.createElement('a')
-    link.href = window.URL.createObjectURL(blob)
-    link.setAttribute('download', `${courseCode}-academic-calendar.ics`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
 
   async function handleAddEvent(e: React.FormEvent) {
     e.preventDefault()
@@ -134,65 +121,39 @@ export function CalendarView({
 
   return (
     <div className="space-y-6">
-      {/* ── Top Bar: Batch Filter & Actions ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border border-border/70 bg-card/60">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <Users className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-foreground">
-              Academic Calendar Scope
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {userBatchStr ? (
-                <>
-                  Filtered for Batch: <strong className="text-foreground">{userBatchStr}</strong> + Course-Wide Tests
-                </>
-              ) : (
-                'Displaying all course academic events'
-              )}
-            </div>
-          </div>
+      {/* ── Filter Tabs & Action Bar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="text-muted-foreground font-semibold mr-1">View:</span>
+          {[
+            { id: 'ALL', label: 'All Events' },
+            { id: 'EXAMS', label: 'Major Exams (MST/EST)' },
+            { id: 'LABS', label: 'Lab Evals & Quizzes' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilterType(tab.id)}
+              className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                filterType === tab.id
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-background hover:bg-secondary text-muted-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <Button variant="outline" size="sm" onClick={handleExportIcs} className="text-xs">
-            <Download className="h-3.5 w-3.5 mr-1.5" />
-            Export (.ics)
-          </Button>
-
+        {isFacultyOrCR && (
           <Button
             size="sm"
             onClick={() => setShowAddModal(true)}
-            className="brand-gradient text-white border-0 shadow-sm text-xs"
+            className="brand-gradient text-white border-0 shadow-sm text-xs self-end sm:self-auto"
           >
             <Plus className="h-3.5 w-3.5 mr-1.5" />
-            {isCRorModerator ? 'Schedule Event' : 'Suggest Event'}
+            Add Event
           </Button>
-        </div>
-      </div>
-
-      {/* ── Filter Tabs ── */}
-      <div className="flex items-center gap-1.5 text-xs">
-        <span className="text-muted-foreground font-semibold mr-1">View:</span>
-        {[
-          { id: 'ALL', label: 'All Events' },
-          { id: 'EXAMS', label: 'Major Exams (MST/EST)' },
-          { id: 'LABS', label: 'Lab Evals & Quizzes' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setFilterType(tab.id)}
-            className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
-              filterType === tab.id
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-background hover:bg-secondary text-muted-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        )}
       </div>
 
       {/* ── Events List ── */}
@@ -236,7 +197,7 @@ export function CalendarView({
                         }
                         className="text-xs font-bold"
                       >
-                        {event.type}
+                        {EVAL_TYPE_LABELS[event.type] || event.type}
                       </Badge>
                       <h3 className="font-bold text-base text-foreground">
                         {event.title}
@@ -249,9 +210,6 @@ export function CalendarView({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant={daysLeft.variant} className="text-xs font-bold">
-                        {daysLeft.label}
-                      </Badge>
                       {event.weightage && (
                         <Badge variant="outline" className="text-xs">
                           {event.weightage} Marks
@@ -305,10 +263,7 @@ export function CalendarView({
 
                   {/* Prep Assistant Deep-Link Banner */}
                   {isMST && (
-                    <div className="flex items-center justify-between pt-1">
-                      <div className="text-xs text-muted-foreground">
-                        Ready to prepare? Review historical pattern changes and predicted questions.
-                      </div>
+                    <div className="flex items-center justify-end pt-1">
                       <Button asChild size="sm" className="brand-gradient text-white border-0 shadow-sm text-xs">
                         <Link href={`/courses/${courseId}/assistant`}>
                           <Sparkles className="h-3.5 w-3.5 mr-1.5" />
@@ -330,12 +285,10 @@ export function CalendarView({
           <Card className="w-full max-w-lg border-border/80 shadow-2xl">
             <CardHeader>
               <CardTitle className="text-lg">
-                {isCRorModerator ? 'Schedule New Academic Event' : 'Suggest an Event to Class Rep'}
+                Add Event
               </CardTitle>
               <CardDescription className="text-xs">
-                {isCRorModerator
-                  ? 'Event will be published immediately to the batch calendar.'
-                  : 'Your suggestion will be sent to your Class Rep (CR) for verification.'}
+                Event will be published immediately to the academic calendar.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -425,7 +378,7 @@ export function CalendarView({
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSubmitting} className="brand-gradient text-white border-0">
-                    {isSubmitting ? 'Saving...' : isCRorModerator ? 'Publish Event' : 'Submit Suggestion'}
+                    {isSubmitting ? 'Saving...' : 'Publish Event'}
                   </Button>
                 </div>
               </form>

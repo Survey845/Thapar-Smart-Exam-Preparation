@@ -4,9 +4,9 @@ import { prisma } from '@/lib/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CourseTabNav } from '@/components/layout/CourseTabNav'
+import { CourseBreadcrumb } from '@/components/course/CourseBreadcrumb'
 import { EnrollButton } from '@/components/course/EnrollButton'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft } from 'lucide-react'
 import { shortDept } from '@/lib/utils'
 
 interface CourseLayoutProps {
@@ -35,24 +35,15 @@ export default async function CourseLayout({ children, params }: CourseLayoutPro
     notFound()
   }
 
-  const isEnrolled = course.enrollments.length > 0
+  const isTeacher = session.user.role === 'MODERATOR'
+  const isEnrolled = isTeacher || course.enrollments.length > 0
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* ── Course Header ── */}
       <div className="border-b border-border/60 bg-card/60 backdrop-blur">
         <div className="container mx-auto max-w-7xl px-4 py-5">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-            <Link
-              href="/courses"
-              className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              All Courses
-            </Link>
-            <span>/</span>
-            <span className="font-mono text-foreground">{course.code}</span>
-          </div>
+          <CourseBreadcrumb courseCode={course.code} />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-1">
@@ -75,13 +66,15 @@ export default async function CourseLayout({ children, params }: CourseLayoutPro
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <EnrollButton
-                courseId={course.id}
-                initialEnrolled={isEnrolled}
-                size="default"
-              />
-            </div>
+            {!isTeacher && (
+              <div className="flex items-center gap-3">
+                <EnrollButton
+                  courseId={course.id}
+                  initialEnrolled={isEnrolled}
+                  size="default"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

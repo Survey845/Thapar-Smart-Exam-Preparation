@@ -47,12 +47,8 @@ export default async function PracticePage({ params }: PracticePageProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="border-b border-border/60 pb-5">
-        <div className="flex items-center gap-2 text-primary font-medium text-xs mb-1">
-          <Dumbbell className="h-3.5 w-3.5" />
-          <span>Interactive Practice</span>
-        </div>
         <h2 className="text-2xl font-bold tracking-tight">
-          Practice Mode — {course.code}
+          Practice Mode
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
           Work through real TIET questions topic-by-topic. Write your thoughts, reveal step-by-step verified solutions, and benchmark your readiness.

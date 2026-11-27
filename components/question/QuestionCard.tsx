@@ -53,10 +53,7 @@ export function QuestionCard({ courseId, question }: QuestionCardProps) {
     <Card className="border-border/70 hover:shadow-sm transition-shadow">
       <CardHeader className="pb-3 pt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-sm text-foreground">
-              {question.questionNumber || 'Question'}
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="text-xs font-semibold">
               {question.marks} Marks
             </Badge>

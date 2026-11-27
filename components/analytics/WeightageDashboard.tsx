@@ -36,11 +36,27 @@ export function WeightageDashboard({
   courseCode,
   weightages,
 }: WeightageDashboardProps) {
-  const [selectedEvalType, setSelectedEvalType] = useState<string>('MST')
-
-  const filtered = weightages.filter((w) =>
-    selectedEvalType === 'ALL' ? true : w.evalType === selectedEvalType
+  const availableTypes = Array.from(
+    new Set(weightages.map((w) => w.evalType).filter((t) => t !== 'ALL'))
   )
+  const filterOptions = ['ALL', ...availableTypes]
+  const [selectedEvalType, setSelectedEvalType] = useState<string>('ALL')
+
+  if (weightages.length === 0) {
+    return (
+      <Card className="p-10 text-center border-dashed space-y-2">
+        <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto opacity-70" />
+        <p className="text-sm font-semibold text-foreground">
+          No topic weightage stats available for {courseCode} yet
+        </p>
+        <p className="text-xs text-muted-foreground max-w-md mx-auto">
+          Weightages are calculated automatically once past exam papers from Resources are extracted into the Question Bank.
+        </p>
+      </Card>
+    )
+  }
+
+  const filtered = weightages.filter((w) => w.evalType === selectedEvalType)
 
   // Sort by marksShare descending
   const sorted = [...filtered].sort((a, b) => b.marksShare - a.marksShare)
@@ -50,6 +66,10 @@ export function WeightageDashboard({
     sorted.length > 0
       ? Math.round(sorted.reduce((acc, curr) => acc + curr.frequencyScore, 0) / sorted.length)
       : 0
+  const top3Share = Math.min(
+    100,
+    Math.round(sorted.slice(0, 3).reduce((acc, curr) => acc + curr.marksShare, 0) * 10) / 10
+  )
 
   return (
     <div className="space-y-6">
@@ -59,12 +79,12 @@ export function WeightageDashboard({
           <CardHeader className="pb-2">
             <CardDescription className="text-xs">Highest Yield Topic</CardDescription>
             <CardTitle className="text-lg font-extrabold flex items-center justify-between text-primary">
-              <span className="truncate">{topTopic?.topic || 'Agile Scrum'}</span>
+              <span className="truncate">{topTopic?.topic || '—'}</span>
               <Award className="h-5 w-5 text-amber-500 shrink-0" />
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            Accounts for <strong>{topTopic?.marksShare || 32.5}%</strong> of historical paper marks
+            Accounts for <strong>{topTopic?.marksShare ?? 0}%</strong> of historical paper marks
           </CardContent>
         </Card>
 
@@ -77,7 +97,7 @@ export function WeightageDashboard({
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            Across analyzed semester papers
+            Across analyzed uploaded papers
           </CardContent>
         </Card>
 
@@ -85,21 +105,21 @@ export function WeightageDashboard({
           <CardHeader className="pb-2">
             <CardDescription className="text-xs">Preparation Impact</CardDescription>
             <CardTitle className="text-lg font-extrabold flex items-center justify-between">
-              <span>Top 3 = 78%</span>
+              <span>Top 3 = {top3Share}%</span>
               <BarChart3 className="h-5 w-5 text-primary shrink-0" />
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            Mastering top 3 topics covers ~80% of typical paper marks
+            Mastering the top 3 topics covers {top3Share}% of historical paper marks
           </CardContent>
         </Card>
       </div>
 
       {/* ── Controls & Filter Bar ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-border/60 bg-muted/20">
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
           <span className="text-muted-foreground font-semibold mr-1">Exam Type:</span>
-          {['MST', 'EST', 'ALL'].map((type) => (
+          {filterOptions.map((type) => (
             <button
               key={type}
               onClick={() => setSelectedEvalType(type)}
@@ -113,13 +133,6 @@ export function WeightageDashboard({
             </button>
           ))}
         </div>
-
-        <Button asChild size="sm" className="brand-gradient text-white border-0 shadow-sm text-xs">
-          <Link href={`/courses/${courseId}/assistant`}>
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            Launch AI Pattern Predictor
-          </Link>
-        </Button>
       </div>
 
       {/* ── Grounding Banner ── */}

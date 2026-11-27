@@ -3,11 +3,12 @@ import { authOptions } from '@/lib/auth/config'
 import { prisma } from '@/lib/db'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { User, Shield, Users, BookOpen, Layers, CheckCircle2 } from 'lucide-react'
+import { User, Shield, Users, BookOpen, Layers, CheckCircle2, KeyRound } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatBatch, ROLE_LABELS, ROLE_VARIANTS } from '@/lib/utils'
 import { ProfileRoleSwitcher } from '@/components/profile/ProfileRoleSwitcher'
+import { ChangePasswordForm } from '@/components/profile/ChangePasswordForm'
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions)
@@ -31,13 +32,15 @@ export default async function ProfilePage() {
     redirect('/login')
   }
 
+  const hasExistingPassword = !!user.passwordHash
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8 space-y-8 animate-fade-in">
       {/* ── Page Header ── */}
       <div className="border-b border-border/60 pb-5">
         <h1 className="text-3xl font-extrabold tracking-tight">User Profile</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Manage your student identity, batch association, and preview platform roles.
+          Manage your student identity, academic batch association, and account security.
         </p>
       </div>
 
@@ -112,21 +115,41 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* ── Demo Role Switcher Card ── */}
+        {/* ── Password & Security Card ── */}
         <Card className="border-border/70 bg-card/60">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Demo Role Switcher</CardTitle>
-              <Badge variant="warning">Dev Mode</Badge>
+              <CardTitle className="text-lg">Security &amp; Password</CardTitle>
+              <KeyRound className="w-4 h-4 text-muted-foreground" />
             </div>
             <CardDescription>
-              Instantly toggle accounts to test Student, Contributor, and Moderator access.
+              {hasExistingPassword
+                ? 'Update your account password below'
+                : 'Set a password to enable email & password sign in'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ProfileRoleSwitcher currentEmail={user.email} />
+            <ChangePasswordForm hasExistingPassword={hasExistingPassword} />
           </CardContent>
         </Card>
+
+        {/* ── Demo Role Switcher (Visible only when DEV_AUTH=true) ── */}
+        {process.env.DEV_AUTH === 'true' && (
+          <Card className="border-border/70 bg-card/60 md:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Demo Role Switcher</CardTitle>
+                <Badge variant="outline">Dev Mode</Badge>
+              </div>
+              <CardDescription>
+                Instantly toggle accounts to test Student, Contributor, and Moderator access.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProfileRoleSwitcher currentEmail={user.email} />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

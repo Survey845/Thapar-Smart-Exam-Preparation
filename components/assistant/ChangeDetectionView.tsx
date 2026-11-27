@@ -12,27 +12,8 @@ interface ChangeDetectionViewProps {
 export function ChangeDetectionView({ shifts }: ChangeDetectionViewProps) {
   return (
     <div className="space-y-6">
-      {/* ── Banner: Shift Context ── */}
-      <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-start gap-3">
-        <RefreshCw className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-        <div className="space-y-0.5 text-xs">
-          <div className="font-bold text-foreground">
-            Multi-Year Pattern Trajectory Analysis
-          </div>
-          <p className="text-muted-foreground">
-            Comparing older papers ({shifts.olderYears.join(', ')}) against recent papers ({shifts.recentYears.join(', ')}).
-            Identifies changes in professor question styles, new diagram expectations, and topic shifts.
-          </p>
-        </div>
-      </div>
-
       {/* ── Detected Pattern Shifts ── */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-bold text-foreground">
-          Observed Pattern Shifts in Recent Papers
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {shifts.shifts.map((shift, idx) => {
             const isUp = shift.trend === 'INCREASED'
             const isDown = shift.trend === 'DECREASED'
@@ -64,7 +45,6 @@ export function ChangeDetectionView({ shifts }: ChangeDetectionViewProps) {
             )
           })}
         </div>
-      </div>
 
       {/* ── Slide Emphasis vs PYQ Alignment ── */}
       <Card className="border-border/70">

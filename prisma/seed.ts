@@ -60,9 +60,9 @@ async function main() {
       batchId: batchCoe3_72.id, // COE 3rd Year Subgroup 3C72
     },
     {
-      name: 'Priya Kapoor (Demo Contributor)',
+      name: 'Priya Kapoor (Student)',
       email: 'contributor@thapar.edu',
-      role: 'CONTRIBUTOR',
+      role: 'STUDENT',
       batchId: batchCse3.id,
     },
     {
@@ -642,7 +642,7 @@ async function main() {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Email                      Role          Password
   student@thapar.edu         STUDENT       demo123
-  contributor@thapar.edu     CONTRIBUTOR   demo123
+  contributor@thapar.edu     STUDENT       demo123
   moderator@thapar.edu       MODERATOR     demo123
   cr@thapar.edu              CR            demo123
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

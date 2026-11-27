@@ -46,12 +46,8 @@ export default async function QuizPage({ params }: QuizPageProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="border-b border-border/60 pb-5">
-        <div className="flex items-center gap-2 text-primary font-medium text-xs mb-1">
-          <Trophy className="h-3.5 w-3.5" />
-          <span>Timed Examination Simulation</span>
-        </div>
         <h2 className="text-2xl font-bold tracking-tight">
-          Mock Quiz — {course.code}
+          Mock Quiz
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
           Take a timed practice test built from authentic TIET past paper questions. Get an instant score and an AI-generated weak topic diagnostic report.

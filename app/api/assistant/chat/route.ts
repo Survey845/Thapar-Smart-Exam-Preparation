@@ -5,6 +5,8 @@ import { getLLMProvider } from '@/lib/llm'
 import { hybridRetrieve } from '@/lib/vector/hybrid'
 import { prisma } from '@/lib/db'
 
+export const maxDuration = 60
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -62,13 +64,7 @@ Please provide a helpful, step-by-step answer citing the exact slide numbers or 
       replyText = await llm.generateText(userPrompt, { systemPrompt, temperature: 0.2 })
     } catch (e) {
       console.error('LLM generation error:', e)
-      replyText = `### ${course?.code || 'TIET'} Assistant Response
-
-Based on the course materials:
-- **Agile Scrum Framework**: Emphasizes iterative sprints and continuous feedback [Source: Slide 2: Agile Principles].
-- **Waterfall Model**: Phase-gated linear sequential model [Source: TIET MST 2023: Q1(a)].
-
-*Note: For further details, refer to Slide Deck 3 and past MST papers in the Question Bank.*`
+      replyText = `Sorry, TIET - GPT is temporarily unable to reach the AI service for ${course?.code || 'this course'}. Please try again in a moment.`
     }
 
     return NextResponse.json({

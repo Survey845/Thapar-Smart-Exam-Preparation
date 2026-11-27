@@ -18,17 +18,15 @@ export function formatBatch(batch: { branch: string; year: number; group: string
 /** Human-readable label for each role */
 export const ROLE_LABELS: Record<Role, string> = {
   STUDENT: 'Student',
-  CONTRIBUTOR: 'Contributor',
-  MODERATOR: 'Moderator',
-  CR: 'Class Representative',
+  CR: 'Class Representative (CR)',
+  MODERATOR: 'Teacher',
 }
 
 /** Badge colour variant per role */
-export const ROLE_VARIANTS: Record<Role, string> = {
+export const ROLE_VARIANTS: Record<Role, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   STUDENT: 'default',
-  CONTRIBUTOR: 'secondary',
-  MODERATOR: 'destructive',
   CR: 'outline',
+  MODERATOR: 'destructive',
 }
 
 /** Department abbreviations used in compact display */

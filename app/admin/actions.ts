@@ -57,7 +57,6 @@ export async function updateQuestionAction(
 
 export async function approveAllPendingAction(courseId?: string) {
   await requireModerator()
-
   const pending = await prisma.question.findMany({
     where: {
       isApproved: false,
@@ -81,4 +80,58 @@ export async function approveAllPendingAction(courseId?: string) {
   revalidatePath('/admin')
   revalidatePath('/courses')
   return { approvedCount: pending.length }
+}
+
+/**
+ * Allows Teachers and Admins to appoint a student as CR (or revert a CR back to Student)
+ */
+export async function assignUserRoleAction(targetEmail: string, newRole: 'STUDENT' | 'CR') {
+  await requireModerator()
+
+  const cleanEmail = targetEmail.toLowerCase().trim()
+  const targetUser = await prisma.user.findUnique({
+    where: { email: cleanEmail },
+  })
+
+  if (!targetUser) {
+    return { success: false, error: `User with email "${cleanEmail}" not found.` }
+  }
+
+  // Prevent redundant assignment
+  if (targetUser.role === newRole) {
+    return {
+      success: false,
+      error:
+        newRole === 'CR'
+          ? `${targetUser.name || cleanEmail} is already a Class Representative.`
+          : `${targetUser.name || cleanEmail} is already a regular Student.`,
+    }
+  }
+
+  // Teachers can only promote to CR or revert to STUDENT (cannot modify other Teachers)
+  if (targetUser.role === 'MODERATOR') {
+    return { success: false, error: 'Teachers cannot alter roles of other Teachers.' }
+  }
+
+  const updated = await prisma.user.update({
+    where: { email: cleanEmail },
+    data: { role: newRole },
+    include: {
+      batch: { select: { branch: true, year: true, group: true } },
+    },
+  })
+
+  revalidatePath('/dashboard')
+  revalidatePath('/admin')
+  revalidatePath('/profile')
+  return {
+    success: true,
+    user: {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+      batch: updated.batch,
+    },
+  }
 }

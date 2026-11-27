@@ -16,11 +16,37 @@ export default withAuth(
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
 
+    // Redirect students without a batch to /onboarding
+    if (
+      token?.role === 'STUDENT' &&
+      !token?.batchId &&
+      !pathname.startsWith('/onboarding') &&
+      !pathname.startsWith('/api')
+    ) {
+      return NextResponse.redirect(new URL('/onboarding', req.url))
+    }
+
+    // If student already has a batch, prevent lingering on /onboarding
+    if (token?.batchId && pathname.startsWith('/onboarding')) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+
     return NextResponse.next()
   },
   {
     callbacks: {
-      authorized({ token }) {
+      authorized({ token, req }) {
+        const { pathname } = req.nextUrl
+        // Allow unauthenticated visitors to access login, registration, public APIs, and password recovery pages
+        if (
+          pathname.startsWith('/login') ||
+          pathname.startsWith('/register') ||
+          pathname.startsWith('/forgot-password') ||
+          pathname.startsWith('/reset-password') ||
+          pathname.startsWith('/api/batches')
+        ) {
+          return true
+        }
         return !!token
       },
     },
@@ -31,8 +57,8 @@ export default withAuth(
 )
 
 export const config = {
-  // Protect all routes except NextAuth API, static files, and login page
+  // Protect all page routes except APIs, static files, and public auth screens
   matcher: [
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|login).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|login|register|forgot-password|reset-password).*)',
   ],
 }

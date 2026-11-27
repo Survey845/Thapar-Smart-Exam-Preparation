@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { QuestionReviewCard } from '@/components/admin/QuestionReviewCard'
 import { ApproveAllButton } from '@/components/admin/ApproveAllButton'
+import { AppointCRCard } from '@/components/admin/AppointCRCard'
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions)
@@ -14,10 +15,20 @@ export default async function AdminPage() {
     redirect('/dashboard')
   }
 
+  // Determine courses assigned to this teacher
+  const teacherCourses = await prisma.teacherCourse.findMany({
+    where: { teacherId: session.user.id },
+    select: { courseId: true },
+  })
+  const courseFilter = teacherCourses.length > 0 ? { in: teacherCourses.map((tc) => tc.courseId) } : undefined
+
   // Fetch pending review items & overall stats
   const [pendingQuestions, approvedCount, pendingDocsCount] = await Promise.all([
     prisma.question.findMany({
-      where: { isApproved: false },
+      where: {
+        isApproved: false,
+        ...(courseFilter && { courseId: courseFilter }),
+      },
       include: {
         course: { select: { code: true, name: true } },
         sourceDocument: { select: { title: true } },
@@ -28,10 +39,16 @@ export default async function AdminPage() {
       orderBy: { createdAt: 'desc' },
     }),
     prisma.question.count({
-      where: { isApproved: true },
+      where: {
+        isApproved: true,
+        ...(courseFilter && { courseId: courseFilter }),
+      },
     }),
     prisma.document.count({
-      where: { status: 'NEEDS_REVIEW' },
+      where: {
+        status: 'NEEDS_REVIEW',
+        ...(courseFilter && { courseId: courseFilter }),
+      },
     }),
   ])
 
@@ -42,21 +59,24 @@ export default async function AdminPage() {
         <div>
           <div className="flex items-center gap-2 text-destructive font-medium text-sm mb-1">
             <ShieldCheck className="h-4 w-4" />
-            <span>Moderation Center</span>
+            <span>Teacher &amp; Moderation Center</span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Moderator Review Queue</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Teacher Portal &amp; Review Queue</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Review parsed questions, verify topic tags, and approve items to make them searchable and embedded.
+            Approve uploaded course materials, review parsed questions, and appoint Class Representatives (CRs).
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <ApproveAllButton pendingCount={pendingQuestions.length} />
           <Badge variant="destructive" className="px-3 py-1 text-xs">
-            Role: MODERATOR
+            Role: TEACHER
           </Badge>
         </div>
       </div>
+
+      {/* ── Appoint Class Representative (CR) Section ── */}
+      <AppointCRCard />
 
       {/* ── Metric Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">

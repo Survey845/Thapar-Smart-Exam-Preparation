@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { MathRenderer } from '@/components/math/MathRenderer'
-import { Sparkles, Send, Loader2, BookOpen, ShieldCheck, HelpCircle, FileText } from 'lucide-react'
+import { Sparkles, Send, Loader2, BookOpen, HelpCircle, FileText } from 'lucide-react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -22,22 +22,14 @@ interface Message {
 interface AssistantChatProps {
   courseId: string
   courseCode: string
+  courseName?: string
 }
 
-const QUICK_PROMPTS = [
-  'Compare Waterfall with Agile Scrum like in the 2023 MST',
-  'What is the structure and pattern of the MST exam?',
-  'Explain IEEE 830 functional requirements simply',
-  'Give me a 5-mark question on Extreme Programming',
-]
-
-export function AssistantChat({ courseId, courseCode }: AssistantChatProps) {
+export function AssistantChat({ courseId, courseCode, courseName }: AssistantChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Hello! I am **TIET-GPT**, your course-grounded tutor for **${courseCode}**.
-
-Every response I give is strictly grounded in your lecture slides and approved past exam papers. I will cite the exact slide numbers or past exam questions used. How can I help you prepare today?`,
+      content: `Hello! I am **TIET - GPT**, your exam prep assistant for **${courseCode}**${courseName ? ` (${courseName})` : ''}. How can I help you prepare today?`,
     },
   ])
   const [input, setInput] = useState('')
@@ -89,14 +81,6 @@ Every response I give is strictly grounded in your lecture slides and approved p
 
   return (
     <div className="space-y-4">
-      {/* ── Grounding Rule Notice ── */}
-      <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 text-xs text-muted-foreground flex items-center gap-2">
-        <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-        <span>
-          <strong>Grounding Guarantee:</strong> TIET-GPT uses hybrid retrieval against your course slides & past papers. Unretrieved topics will not be guessed.
-        </span>
-      </div>
-
       {/* ── Chat Window ── */}
       <Card className="border-border/70 shadow-sm flex flex-col h-[520px]">
         {/* Messages Stream */}
@@ -161,21 +145,6 @@ Every response I give is strictly grounded in your lecture slides and approved p
               </div>
             </div>
           )}
-        </div>
-
-        {/* Quick Prompts */}
-        <div className="px-4 py-2 border-t border-border/40 bg-muted/20 flex overflow-x-auto gap-1.5 scrollbar-none">
-          {QUICK_PROMPTS.map((p, i) => (
-            <button
-              key={i}
-              type="button"
-              disabled={loading}
-              onClick={() => handleSend(p)}
-              className="text-[11px] px-2.5 py-1 rounded-full border border-border/60 bg-background hover:bg-secondary text-muted-foreground hover:text-foreground whitespace-nowrap transition-colors shrink-0"
-            >
-              {p}
-            </button>
-          ))}
         </div>
 
         {/* Input Bar */}

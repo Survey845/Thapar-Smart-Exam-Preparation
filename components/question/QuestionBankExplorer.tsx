@@ -112,20 +112,6 @@ export function QuestionBankExplorer({
             </button>
           )}
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm" className="brand-gradient text-white border-0 shadow-sm">
-            <Link href={`/courses/${courseId}/practice`}>
-              <Dumbbell className="h-3.5 w-3.5 mr-1.5" />
-              Start Practice Session
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/courses/${courseId}/quiz`}>
-              Mock Quiz
-            </Link>
-          </Button>
-        </div>
       </div>
 
       {/* ── Filter Pills ── */}
