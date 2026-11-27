@@ -241,7 +241,7 @@ npm run test:eval
 
 - **Zero Fabricated Stats**: Mark shares, question counts, and historical frequencies are calculated through strict database aggregation.
 - **Domain Restriction**: Authentication enforces institutional `@thapar.edu` identity.
-- **Privacy & Copyright**: Uploads require authorization, solutions carry clear attribution, and student data remains private.
+- **Privacy & Copyright**: Uploads require authorization, solutions carry clear attribution, and student data remains private
 
 ---
 
