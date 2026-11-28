@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { signIn, getProviders } from 'next-auth/react'
 import Link from 'next/link'
-import { AlertCircle, Loader2, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react'
+import { AlertCircle, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -48,9 +48,6 @@ export default function RegisterPage() {
 
       <Card className="shadow-xl border-border/60">
         <CardHeader className="space-y-1">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary mb-1">
-            <Sparkles className="w-5 h-5" />
-          </div>
           <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
           <CardDescription>
             Join Thapar Smart Exam Prep with your verified institute Google account

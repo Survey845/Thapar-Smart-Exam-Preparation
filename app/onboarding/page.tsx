@@ -149,7 +149,7 @@ export default function OnboardingPage() {
               <ul className="text-xs space-y-1.5 text-foreground/80">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  Auto-enrollment into core subject: <strong className="text-foreground">UCS503 (Software Engineering)</strong>
+                  Auto-enrollment into your <strong className="text-foreground">Year 1 (Pool A / Pool B)</strong> or <strong className="text-foreground">Year 3</strong> subjects
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />

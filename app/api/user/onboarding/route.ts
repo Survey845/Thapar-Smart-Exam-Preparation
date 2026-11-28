@@ -31,9 +31,24 @@ export async function POST(req: Request) {
       include: { batch: true },
     })
 
-    // Auto-enroll in default courses if not enrolled
+    // Auto-enroll based on Year & Pool (Pool A / Pool B for Year 1, Software Engineering for Year 3)
     try {
-      const courses = await prisma.course.findMany({ take: 5 })
+      let targetCodes: string[] = []
+      const groupUpper = batch.group.toUpperCase()
+
+      if (batch.year === 1 && groupUpper.includes('A')) {
+        targetCodes = ['UCH101', 'UEE001', 'UEN008', 'UES103', 'UMA022']
+      } else if (batch.year === 1 && groupUpper.includes('B')) {
+        targetCodes = ['UHU003', 'UPH013', 'UTA015', 'UTA026', 'UMA023']
+      } else if (batch.year === 3) {
+        targetCodes = ['UCS503']
+      }
+
+      const courses =
+        targetCodes.length > 0
+          ? await prisma.course.findMany({ where: { code: { in: targetCodes } } })
+          : await prisma.course.findMany({ where: { code: 'UCS503' } })
+
       for (const course of courses) {
         await prisma.enrollment.upsert({
           where: {
